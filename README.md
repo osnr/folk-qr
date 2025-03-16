@@ -14,10 +14,13 @@ src="doc/video.png" height="300"></a>
 
 ([video](https://youtube.com/shorts/LZnhJCdZSVA))
 
-**Viewing a URL (URL courtesy of [Owen
-Trueblood](https://owentrueblood.com/experiments/autonomous_response/)):**
+**Viewing a URL (URL thanks to
+[Owen](https://owentrueblood.com/experiments/autonomous_response/), video thanks to [Kelin](https://www.carolynzhang.com)):**
 
-<img src="doc/viewing-url.jpg" height="250"> <img src="doc/viewing-url-2.jpg" height="250">
+<a href="https://youtube.com/shorts/2yj2y554O5g"><img
+src="doc/viewing-url.jpg" height="300"></a> <img src="doc/viewing-url-2.jpg" height="250">
+
+([video](https://youtube.com/shorts/2yj2y554O5g))
 
 No need for a phone, and people around you can see and participate in
 what you're doing too, they don't need to pull out their own
