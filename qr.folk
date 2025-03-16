@@ -1,0 +1,61 @@
+When display /disp/ has width /displayWidth/ height /displayHeight/ {
+    When the QR detect is /detect/ {
+        set cx [/ $displayWidth 2.0]
+        Wish to draw text with x $cx y [* $displayHeight 0.3] text $detect color red scale 2.0
+    }
+}
+
+set cc [c create]
+$cc cflags -I/home/folk/quirc/lib
+$cc include "quirc.h"
+$cc code {
+    struct quirc *qr;
+}
+::defineImageType $cc
+$cc proc qrDetect {image_t im} int {
+    if (qr == NULL) {
+        qr = quirc_new();
+        FOLK_ENSURE(qr != NULL);
+        FOLK_ENSURE(quirc_resize(qr, im.width, im.height) >= 0);
+    }
+
+    uint8_t *qrim; int w, h;
+    qrim = quirc_begin(qr, &w, &h);
+    FOLK_ENSURE(w == im.width);
+    FOLK_ENSURE(h == im.height);
+    FOLK_ENSURE(1 == im.components);
+    for (int y = 0; y < im.height; y++) {
+        memcpy(&qrim[y * w], &im.data[y * im.bytesPerRow], w);
+    }
+    quirc_end(qr);
+
+    int num_codes;
+    int i;
+    num_codes = quirc_count(qr);
+    for (i = 0; i < num_codes; i++) {
+        struct quirc_code code;
+        struct quirc_data data;
+        quirc_decode_error_t err;
+
+        quirc_extract(qr, i, &code);
+
+        /* Decoding stage */
+        err = quirc_decode(&code, &data);
+        if (err)
+            printf("DECODE FAILED: %s\n", quirc_strerror(err));
+        else
+            printf("Data: %s\n", data.payload);
+    }
+    return num_codes;
+}
+c loadlib "/home/folk/quirc/libquirc.so.1.2"
+$cc compile
+
+When the button is /state/ {
+    if {$state eq "pressed"} {
+        set results [Statements::findMatches [list /someone/ claims camera /cam/ has frame /f/ at timestamp /any/]]
+        if {[llength $results] < 1} { return }
+        set f [dict get [lindex $results 0] f]
+        Hold! qr [list $this claims the QR detect is [qrDetect $f]]
+    }
+}
