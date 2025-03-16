@@ -1,7 +1,15 @@
 When display /disp/ has width /displayWidth/ height /displayHeight/ {
     When the QR detect is /detect/ {
-        set cx [/ $displayWidth 2.0]
-        Wish to draw text with x $cx y [* $displayHeight 0.3] text $detect color red scale 2.0
+        Wish to draw text with x 10 y [* $displayHeight 0.3] text [join $detect "\n"] color red scale 2.0 anchor left
+
+        if {[llength $detect] > 0} {
+            set imgfd [file tempfile imgfile imgfile.png]
+            exec -ignorestderr wkhtmltoimage --width 640 [lindex $detect 0] $imgfile
+            set im [image load $imgfile]
+            close $imgfd
+            Wish to draw an image with center [list [* $displayWidth 0.75] [/ $displayHeight 2.0]] \
+                image $im radians 0 scale 1
+        }
     }
 }
 
@@ -12,7 +20,7 @@ $cc code {
     struct quirc *qr;
 }
 ::defineImageType $cc
-$cc proc qrDetect {image_t im} int {
+$cc proc qrDetect {Tcl_Interp* interp image_t im} Tcl_Obj* {
     if (qr == NULL) {
         qr = quirc_new();
         FOLK_ENSURE(qr != NULL);
@@ -29,11 +37,12 @@ $cc proc qrDetect {image_t im} int {
     }
     quirc_end(qr);
 
-    int num_codes;
-    int i;
-    num_codes = quirc_count(qr);
-    for (i = 0; i < num_codes; i++) {
-        struct quirc_code code;
+    Tcl_Obj* ret = Tcl_NewListObj(0, NULL);
+    
+    int num_codes = quirc_count(qr);
+    fprintf(stderr, "Num_codes: %d\n", num_codes);
+    for (int i = 0; i < num_codes; i++) {
+        struct quirc_code code; 
         struct quirc_data data;
         quirc_decode_error_t err;
 
@@ -41,12 +50,16 @@ $cc proc qrDetect {image_t im} int {
 
         /* Decoding stage */
         err = quirc_decode(&code, &data);
-        if (err)
-            printf("DECODE FAILED: %s\n", quirc_strerror(err));
-        else
-            printf("Data: %s\n", data.payload);
+        if (err) {
+            fprintf(stderr, "DECODE FAILED: %s\n", quirc_strerror(err));
+        } else {
+            fprintf(stderr, "Data: %s\n", data.payload);
+
+            Tcl_Obj* el = Tcl_NewStringObj((char *)data.payload, -1);
+            Tcl_ListObjAppendElement(interp, ret, el);
+        }
     }
-    return num_codes;
+    return ret;
 }
 c loadlib "/home/folk/quirc/libquirc.so.1.2"
 $cc compile
