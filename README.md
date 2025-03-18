@@ -46,6 +46,14 @@ Apache 2.0
 
 - Kind of hard-coded to the gadget: assumes 720p projection, `Claim
   the button is pressed` statement to trigger
+  - On my Orange Pi 5 gadget, I have this in `setup.folk` to establish
+    button state:
+
+        exec gpio mode 7 up
+        When the clock time is /t/ {
+            set pressed [expr {![exec gpio read 7]}]
+            Claim the button is [expr {$pressed ? "pressed" : "unpressed"}]
+        }
 
 - System freezes while doing URL download and rendering, would be good
   to do async and timeout (sometimes it freezes indefinitely if the
