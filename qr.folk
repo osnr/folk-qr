@@ -64,11 +64,24 @@ $cc proc qrDetect {Tcl_Interp* interp image_t im} Tcl_Obj* {
 c loadlib "/home/folk/quirc/libquirc.so.1.2"
 $cc compile
 
-When the button is /state/ {
-    if {$state eq "pressed"} {
-        set results [Statements::findMatches [list /someone/ claims camera /cam/ has frame /f/ at timestamp /any/]]
-        if {[llength $results] < 1} { return }
-        set f [dict get [lindex $results 0] f]
-        Hold! qr [list $this claims the QR detect is [qrDetect $f]]
+set ::prevDetects [list]
+When the button is pressed & camera /cam/ has frame /f/ at timestamp /any/ {
+    set det [qrDetect $f]
+    lappend ::prevDetects $det
+    if {[llength $::prevDetects] > 10} {
+        set ::prevDetects [lassign $::prevDetects oldestDetect]
     }
+
+    if {[llength $det] == 0} {
+        return
+
+        # Don't let it through unless all the last few detects were 0.
+        # foreach prevDet $::prevDetects {
+        #     if {[llength $prevDet] > 0} {
+        #         return
+        #     }
+        # }
+    }
+
+    Hold! qr [list $this claims the QR detect is $det]
 }
