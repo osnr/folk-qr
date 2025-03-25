@@ -68,19 +68,17 @@ set ::prevDetects [list]
 When the button is pressed & camera /cam/ has frame /f/ at timestamp /any/ {
     set det [qrDetect $f]
     lappend ::prevDetects $det
-    if {[llength $::prevDetects] > 10} {
+    if {[llength $::prevDetects] > 15} {
         set ::prevDetects [lassign $::prevDetects oldestDetect]
     }
 
     if {[llength $det] == 0} {
-        return
-
-        # Don't let it through unless all the last few detects were 0.
-        # foreach prevDet $::prevDetects {
-        #     if {[llength $prevDet] > 0} {
-        #         return
-        #     }
-        # }
+        # Don't let it clear unless all the last few detects were 0.
+        foreach prevDet $::prevDetects {
+            if {[llength $prevDet] > 0} {
+                return
+            }
+        }
     }
 
     Hold! qr [list $this claims the QR detect is $det]
