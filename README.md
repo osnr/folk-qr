@@ -55,13 +55,18 @@ Apache 2.0
             Claim the button is [expr {$pressed ? "pressed" : "unpressed"}]
         }
 
-- System freezes while doing URL download and rendering, would be good
+- ~~System freezes while doing URL download and rendering, would be good
   to do async and timeout (sometimes it freezes indefinitely if the
   page is too complex, which is scary and makes me paranoid when
-  scanning untested URLs)
+  scanning untested URLs)~~
 
-- (Unlike phone QR detect that runs continuously), for now only has
+- ~~(Unlike phone QR detect that runs continuously), for now only has
   one shot per button press to do QR detect. Often not reliable based
   on lighting/print quality/etc. Would be good to just keep retrying
-  each frame until you get a QR code
+  each frame until you get a QR code~~
 
+- TODO: scan wifi qrs, scan program qrs
+
+- replace qr code library with zbar or something OR improve stability
+  of camera image? OR **pre-binarize image** (worked when done
+  manually in imagemagick) before feeding to quirc

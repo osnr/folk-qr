@@ -1,12 +1,40 @@
+When the QR detect is /detect/ {
+    if {[llength $detect] > 0} {
+        set url [lindex $detect 0]
+        if {[llength [Statements::findMatches [list /someone/ claims the QR download for $url is /status/]]] > 0} {
+            return
+        }
+
+        Hold! qr-image [list $this claims the QR download for $url is downloading]
+        # HACK: hold needs to be on same process
+        When the complete QR download for $url is /imgfile/ {
+            Hold! qr-image [list $this claims the QR download for $url is $imgfile]
+        }
+        # HACK: global id so we can keep spawning processes
+        Start process "QR download $url [incr ::qrNextProcessIdx]" {
+            Wish $::thisProcess shares statements like \
+                [list /someone/ claims the complete QR download for /any/ is /any/]
+
+            set imgfd [file tempfile imgfile imgfile.png]
+            exec -ignorestderr wkhtmltoimage --width 640 $url $imgfile
+            Claim the complete QR download for $url is $imgfile
+            close $imgfd
+        }
+    }
+}
+
 When display /disp/ has width /displayWidth/ height /displayHeight/ {
     When the QR detect is /detect/ {
         Wish to draw text with x 10 y [* $displayHeight 0.3] text [join $detect "\n"] color red scale 2.0 anchor left
+    }
 
-        if {[llength $detect] > 0} {
-            set imgfd [file tempfile imgfile imgfile.png]
-            exec -ignorestderr wkhtmltoimage --width 640 [lindex $detect 0] $imgfile
+    When the QR download for /any/ is /imgfile/ {
+        if {$imgfile eq "downloading"} {
+            Wish to draw text with x [* $displayWidth 0.75] y [* $displayHeight 0.3] \
+                text "Loading..." color red scale 2.0 anchor left
+
+        } else {
             set im [image load $imgfile]
-            close $imgfd
             Wish to draw an image with center [list [* $displayWidth 0.75] [/ $displayHeight 2.0]] \
                 image $im radians 0 scale 1
         }
@@ -82,4 +110,5 @@ When the button is pressed & camera /cam/ has frame /f/ at timestamp /any/ {
     }
 
     Hold! qr [list $this claims the QR detect is $det]
+    Hold! qr-image {}
 }
