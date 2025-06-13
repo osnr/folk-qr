@@ -32,9 +32,8 @@ individual phones to see what the QR code is.
 
 Install the `wkhtmltopdf` package (we need `wkhtmltoimage` available).
 
-Clone [quirc](https://github.com/dlbeer/quirc) into `/home/folk/quirc`
-and run `make libquirc.so` (you might need to remove the SDL env var
-definitions in the quirc makefile to get it to build.
+Install ZBar scanning library (I was using quirc before, but ZBar
+seems much more reliable): `sudo apt install libzbar-dev`
 
 ## License
 
@@ -67,6 +66,6 @@ Apache 2.0
 
 - TODO: scan wifi qrs, scan program qrs
 
-- replace qr code library with zbar or something OR improve stability
-  of camera image? OR **pre-binarize image** (worked when done
-  manually in imagemagick) before feeding to quirc
+- ~~replace qr code library with zbar or something OR improve
+  stability of camera image? OR **pre-binarize image** (worked when
+  done manually in imagemagick) before feeding to quirc~~

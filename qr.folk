@@ -42,54 +42,51 @@ When display /disp/ has width /displayWidth/ height /displayHeight/ {
 }
 
 set cc [c create]
-$cc cflags -I/home/folk/quirc/lib
-$cc include "quirc.h"
+$cc include <stdlib.h>
+$cc include <zbar.h>
 $cc code {
-    struct quirc *qr;
+    zbar_image_scanner_t *qr;
 }
 ::defineImageType $cc
 $cc proc qrDetect {Tcl_Interp* interp image_t im} Tcl_Obj* {
     if (qr == NULL) {
-        qr = quirc_new();
+        qr = zbar_image_scanner_create();
         FOLK_ENSURE(qr != NULL);
-        FOLK_ENSURE(quirc_resize(qr, im.width, im.height) >= 0);
+        zbar_image_scanner_set_config(qr, 0, ZBAR_CFG_ENABLE, 1);
     }
 
-    uint8_t *qrim; int w, h;
-    qrim = quirc_begin(qr, &w, &h);
-    FOLK_ENSURE(w == im.width);
-    FOLK_ENSURE(h == im.height);
-    FOLK_ENSURE(1 == im.components);
+    zbar_image_t *qrim;
+    qrim = zbar_image_create();
+    zbar_image_set_format(qrim, zbar_fourcc('Y', '8', '0', '0'));
+    zbar_image_set_size(qrim, im.width, im.height);
+
+    uint8_t *qrimData = malloc(im.width * im.height);
     for (int y = 0; y < im.height; y++) {
-        memcpy(&qrim[y * w], &im.data[y * im.bytesPerRow], w);
+        memcpy(&qrimData[y * im.width], &im.data[y * im.bytesPerRow], im.width);
     }
-    quirc_end(qr);
+    zbar_image_set_data(qrim, qrimData, im.width * im.height, zbar_image_free_data);
 
     Tcl_Obj* ret = Tcl_NewListObj(0, NULL);
     
-    int num_codes = quirc_count(qr);
+    int num_codes = zbar_scan_image(qr, qrim);
     fprintf(stderr, "Num_codes: %d\n", num_codes);
-    for (int i = 0; i < num_codes; i++) {
-        struct quirc_code code; 
-        struct quirc_data data;
-        quirc_decode_error_t err;
 
-        quirc_extract(qr, i, &code);
 
-        /* Decoding stage */
-        err = quirc_decode(&code, &data);
-        if (err) {
-            fprintf(stderr, "DECODE FAILED: %s\n", quirc_strerror(err));
-        } else {
-            fprintf(stderr, "Data: %s\n", data.payload);
+    const zbar_symbol_t *symbol = zbar_image_first_symbol(qrim);
+    for (; symbol; symbol = zbar_symbol_next(symbol)) {
+	/* do something useful with results */
+	zbar_symbol_type_t typ = zbar_symbol_get_type(symbol);
+	const char *data       = zbar_symbol_get_data(symbol);
 
-            Tcl_Obj* el = Tcl_NewStringObj((char *)data.payload, -1);
-            Tcl_ListObjAppendElement(interp, ret, el);
-        }
+	fprintf(stderr, "decoded %s symbol '%s'\n", zbar_get_symbol_name(typ), data);
+        Tcl_Obj* el = Tcl_NewStringObj(data, -1);
+        Tcl_ListObjAppendElement(interp, ret, el);
     }
+
+    zbar_image_destroy(qrim);
     return ret;
 }
-c loadlib "/home/folk/quirc/libquirc.so.1.2"
+c loadlib "/usr/lib/aarch64-linux-gnu/libzbar.so"
 $cc compile
 
 set ::prevDetects [list]
